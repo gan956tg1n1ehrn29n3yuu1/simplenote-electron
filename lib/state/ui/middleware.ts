@@ -30,7 +30,7 @@ export const middleware: S.Middleware = store => {
       // on events re-filter "immediately"
       case 'App.authChanged':
       case 'App.notesLoaded':
-      case 'App.selectTag':
+      case 'OPEN_TAG':
       case 'App.selectTrash':
       case 'App.showAllNotes':
       case 'App.tagsLoaded':
