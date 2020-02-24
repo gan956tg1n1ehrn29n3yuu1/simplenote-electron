@@ -24,10 +24,6 @@ export type SetLineLength = Action<
   'setLineLength',
   { lineLength: T.LineLength }
 >;
-export type SetMarkdownEnabled = Action<
-  'setMarkdownEnabled',
-  { markdownEnabled: boolean }
->;
 export type SetNoteDisplay = Action<
   'setNoteDisplay',
   { noteDisplay: T.ListDisplayMode }
@@ -61,6 +57,10 @@ export type SelectRevision = Action<
   { revision: T.NoteEntity }
 >;
 export type SetAuth = Action<'AUTH_SET', { status: AuthState }>;
+export type SetSystemTag = Action<
+  'SET_SYSTEM_TAG',
+  { note: T.NoteEntity; tagName: T.SystemTag; shouldHaveTag: boolean }
+>;
 export type SetUnsyncedNoteIds = Action<
   'SET_UNSYNCED_NOTE_IDS',
   { noteIds: T.EntityId[] }
@@ -99,12 +99,12 @@ export type ActionType =
   | SetFocusMode
   | SetFontSize
   | SetLineLength
-  | SetMarkdownEnabled
   | SetNoteDisplay
   | SetSortReversed
   | SetSortTagsAlpha
   | SetSortType
   | SetSpellCheck
+  | SetSystemTag
   | SetTheme
   | SetUnsyncedNoteIds
   | SetWPToken
@@ -142,10 +142,6 @@ type LegacyAction =
       { callback?: Function; preferencesBucket: T.Bucket<T.Preferences> }
     >
   | Action<
-      'App.markdownNote',
-      { noteBucket: T.Bucket<T.Note>; note: T.NoteEntity; markdown: boolean }
-    >
-  | Action<
       'App.noteUpdatedRemotely',
       {
         noteBucket: T.Bucket<T.Note>;
@@ -153,14 +149,6 @@ type LegacyAction =
         data: object;
         remoteUpdateInfo: object;
       }
-    >
-  | Action<
-      'App.pinNote',
-      { noteBucket: T.Bucket<T.Note>; note: T.NoteEntity; pin: boolean }
-    >
-  | Action<
-      'App.publishNote',
-      { noteBucket: T.Bucket<T.Note>; note: T.NoteEntity; publish: boolean }
     >
   | Action<
       'App.restoreNote',
