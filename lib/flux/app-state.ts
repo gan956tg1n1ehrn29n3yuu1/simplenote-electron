@@ -205,6 +205,13 @@ export const actionMap = new ActionMap({
               } else {
                 debug(`noteCount: ${notes.length}`);
                 if (notes.length) {
+                  notes.forEach(note =>
+                    dispatch({
+                      type: 'APPLY_REMOTE_UPDATE',
+                      noteId: note.id,
+                      data: note.data,
+                    })
+                  );
                   dispatch(this.action('notesLoaded', { notes: notes }));
                 }
               }
