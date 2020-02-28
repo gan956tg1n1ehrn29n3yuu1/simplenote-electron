@@ -3,7 +3,10 @@ import { getTerms } from '../../utils/filter-notes';
 
 import * as T from '../../types';
 
-const notes: Map<T.EntityId, [T.EntityId, T.Note]> = new Map();
+const notes: Map<
+  T.EntityId,
+  [T.EntityId, T.Note & { tags: Set<T.TagName> }]
+> = new Map();
 
 self.onmessage = bootEvent => {
   const mainApp: MessagePort | undefined = bootEvent.ports[0];
@@ -49,8 +52,7 @@ self.onmessage = bootEvent => {
         continue;
       }
 
-      const noteTags = new Set(note.tags);
-      if (!filterTags.every(tag => noteTags.has(tag))) {
+      if (!filterTags.every(tag => note.tags.has(tag))) {
         continue;
       }
 
@@ -85,7 +87,10 @@ self.onmessage = bootEvent => {
 
       notes.set(noteId, [
         noteId,
-        { ...data, tags: data.tags.map(tag => tag.toLocaleLowerCase()) },
+        {
+          ...data,
+          tags: new Set(data.tags.map(tag => tag.toLocaleLowerCase())),
+        },
       ]);
 
       queueUpdateFilter();
