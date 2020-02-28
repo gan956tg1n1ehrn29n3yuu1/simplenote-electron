@@ -47,7 +47,7 @@ self.onmessage = bootEvent => {
       const toc = performance.now();
       if (scope === 'quickSearch' && toc - tic > 10) {
         mainApp.postMessage({ action: 'filterNotes', noteIds: matches });
-        queueUpdateFilter('fullSearch');
+        queueUpdateFilter(0, 'fullSearch');
         return;
       }
 
@@ -80,7 +80,7 @@ self.onmessage = bootEvent => {
   };
 
   let updateHandle: ReturnType<typeof setTimeout> | null = null;
-  const queueUpdateFilter = (searchScope = 'quickSearch') => {
+  const queueUpdateFilter = (delay = 0, searchScope = 'quickSearch') => {
     if (updateHandle) {
       clearTimeout(updateHandle);
     }
@@ -88,7 +88,7 @@ self.onmessage = bootEvent => {
     updateHandle = setTimeout(() => {
       updateHandle = null;
       updateFilter(searchScope);
-    }, 0);
+    }, delay);
   };
 
   mainApp.onmessage = event => {
@@ -103,7 +103,7 @@ self.onmessage = bootEvent => {
         },
       ]);
 
-      queueUpdateFilter();
+      queueUpdateFilter(1000);
     } else if (event.data.action === 'filterNotes') {
       if ('string' === typeof event.data.searchQuery) {
         searchQuery = event.data.searchQuery.trim();

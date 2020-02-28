@@ -205,11 +205,6 @@ export const actionMap = new ActionMap({
               } else {
                 debug(`noteCount: ${notes.length}`);
                 if (notes.length) {
-                  notes.forEach(note =>
-                    dispatch(
-                      actions.simperium.remoteNoteUpdate(note.id, note.data)
-                    )
-                  );
                   dispatch(this.action('notesLoaded', { notes: notes }));
                 }
               }

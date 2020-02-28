@@ -4,6 +4,7 @@ import actions from '../state/actions';
 
 import * as A from '../state/action-types';
 import * as S from '../state';
+import { search } from '../state/ui/actions';
 
 export const middleware: S.Middleware = store => {
   const searchWorker = new SearchWorker();
@@ -28,11 +29,31 @@ export const middleware: S.Middleware = store => {
   };
 
   searchWorker.postMessage('boot', [_searchProcessor]);
+  let hasInitialized = false;
 
   return next => (action: A.ActionType) => {
     const result = next(action);
 
     switch (action.type) {
+      case 'App.notesLoaded':
+        if (!hasInitialized) {
+          const {
+            appState: { notes },
+          } = store.getState();
+          if (notes) {
+            notes.forEach(note =>
+              searchProcessor.postMessage({
+                action: 'updateNote',
+                noteId: note.id,
+                data: note.data,
+              })
+            );
+          }
+
+          hasInitialized = true;
+        }
+        break;
+
       case 'REMOTE_NOTE_UPDATE':
         searchProcessor.postMessage({
           action: 'updateNote',
