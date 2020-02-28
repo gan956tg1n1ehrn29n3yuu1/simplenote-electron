@@ -71,7 +71,6 @@ export const store = createStore<State, A.ActionType, {}, {}>(
     }),
     applyMiddleware(
       thunk,
-      // uiMiddleware,
       searchMiddleware,
       searchFieldMiddleware,
       simperiumMiddleware
