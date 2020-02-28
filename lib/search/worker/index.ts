@@ -17,8 +17,18 @@ self.onmessage = bootEvent => {
   }
 
   let searchQuery = '';
-  let openedTag: string | null = null;
+  let filterTags = new Set<T.TagName>();
   let showTrash = false;
+
+  const tagsFromSearch = (query: string) => {
+    const tagPattern = /(?:\btag:)([^\s,]+)/g;
+    const searchTags = new Set<T.TagName>();
+    let match;
+    while ((match = tagPattern.exec(query)) !== null) {
+      searchTags.add(match[1].toLocaleLowerCase());
+    }
+    return searchTags;
+  };
 
   const updateFilter = (scope = 'quickSearch') => {
     const tic = performance.now();
@@ -26,13 +36,6 @@ self.onmessage = bootEvent => {
       term => new RegExp(escapeRegExp(term), 'i')
     );
     const matches = new Set<T.EntityId>();
-
-    const filterTags = openedTag ? [openedTag] : [];
-    const tagPattern = /(?:\btag:)([^\s,]+)/g;
-    let match;
-    while ((match = tagPattern.exec(searchQuery)) !== null) {
-      filterTags.push(match[1].toLocaleLowerCase());
-    }
 
     for (const [noteId, note] of notes.values()) {
       // return a small set of the results quickly and then
@@ -52,7 +55,14 @@ self.onmessage = bootEvent => {
         continue;
       }
 
-      if (!filterTags.every(tag => note.tags.has(tag))) {
+      let hasAllTags = true;
+      for (const tagName of filterTags.values()) {
+        if (!note.tags.has(tagName)) {
+          hasAllTags = false;
+          break;
+        }
+      }
+      if (!hasAllTags) {
         continue;
       }
 
@@ -97,12 +107,14 @@ self.onmessage = bootEvent => {
     } else if (event.data.action === 'filterNotes') {
       if ('string' === typeof event.data.searchQuery) {
         searchQuery = event.data.searchQuery.trim();
+        filterTags = tagsFromSearch(searchQuery);
       }
 
       if ('string' === typeof event.data.openedTag) {
-        openedTag = event.data.openedTag.toLocaleLowerCase();
+        filterTags = tagsFromSearch(searchQuery);
+        filterTags.add(event.data.openedTag.toLocaleLowerCase());
       } else if (null === event.data.openedTag) {
-        openedTag = null;
+        filterTags = tagsFromSearch(searchQuery);
       }
 
       if ('boolean' === typeof event.data.showTrash) {

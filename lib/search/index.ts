@@ -4,7 +4,6 @@ import actions from '../state/actions';
 
 import * as A from '../state/action-types';
 import * as S from '../state';
-import { search } from '../state/ui/actions';
 
 export const middleware: S.Middleware = store => {
   const searchWorker = new SearchWorker();
