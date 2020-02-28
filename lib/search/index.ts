@@ -75,8 +75,6 @@ export const middleware: S.Middleware = store => {
       case 'RESTORE_NOTE':
       case 'TRASH_NOTE':
       case 'App.authChanged':
-      case 'App.notesLoaded':
-      case 'App.tagsLoaded':
       case 'App.trashNote':
         searchProcessor.postMessage({ action: 'filterNotes' });
         break;
