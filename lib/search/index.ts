@@ -4,6 +4,7 @@ import actions from '../state/actions';
 
 import * as A from '../state/action-types';
 import * as S from '../state';
+import { search } from '../state/ui/actions';
 
 export const middleware: S.Middleware = store => {
   const searchWorker = new SearchWorker();
@@ -30,7 +31,6 @@ export const middleware: S.Middleware = store => {
   searchWorker.postMessage('boot', [_searchProcessor]);
 
   return next => (action: A.ActionType) => {
-    const prevState = store.getState();
     const result = next(action);
 
     switch (action.type) {
@@ -41,31 +41,45 @@ export const middleware: S.Middleware = store => {
           data: action.data,
         });
         break;
+
+      case 'App.selectTag':
+        searchProcessor.postMessage({
+          action: 'filterNotes',
+          openedTag: action.tag.data.name,
+        });
+        break;
+
+      case 'App.selectTrash':
+        searchProcessor.postMessage({
+          action: 'filterNotes',
+          openedTag: null,
+          showTrash: true,
+        });
+        break;
+
+      case 'App.showAllNotes':
+        searchProcessor.postMessage({
+          action: 'filterNotes',
+          openedTag: null,
+          showTrash: false,
+        });
+        break;
+
+      case 'SEARCH':
+        searchProcessor.postMessage({
+          action: 'filterNotes',
+          searchQuery: action.searchQuery,
+        });
+        break;
+
       case 'DELETE_NOTE_FOREVER':
       case 'RESTORE_NOTE':
       case 'TRASH_NOTE':
       case 'App.authChanged':
       case 'App.notesLoaded':
-      case 'App.selectTag':
-      case 'App.selectTrash':
-      case 'App.showAllNotes':
       case 'App.tagsLoaded':
       case 'App.trashNote':
-      case 'SEARCH':
-        searchProcessor.postMessage({
-          action: 'filterNotes',
-          openedTag:
-            'App.selectTrash' === action.type
-              ? null
-              : 'App.selectTag' === action.type
-              ? action.tag.data.name
-              : prevState.appState.tag?.data.name,
-          searchQuery: action.hasOwnProperty('searchQuery')
-            ? action.searchQuery
-            : prevState.ui.searchQuery,
-          showTrash:
-            'App.selectTrash' === action.type ? true : prevState.ui.showTrash,
-        });
+        searchProcessor.postMessage({ action: 'filterNotes' });
         break;
     }
 

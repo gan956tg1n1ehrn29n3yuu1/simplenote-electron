@@ -56,7 +56,7 @@ self.onmessage = bootEvent => {
     mainApp.postMessage({ action: 'filterNotes', noteIds: matches });
   };
 
-  let updateHandle;
+  let updateHandle: ReturnType<typeof setTimeout>;
   const queueUpdateFilter = () => {
     if (updateHandle) {
       clearTimeout(updateHandle);
@@ -79,12 +79,20 @@ self.onmessage = bootEvent => {
       });
       queueUpdateFilter();
     } else if (event.data.action === 'filterNotes') {
-      searchQuery = event.data.searchQuery.trim();
-      openedTag =
-        'string' === typeof event.data.openedTag
-          ? event.data.openedTag.toLocaleLowerCase()
-          : event.data.openedTag;
-      showTrash = event.data.showTrash;
+      if ('string' === typeof event.data.searchQuery) {
+        searchQuery = event.data.searchQuery.trim();
+      }
+
+      if ('string' === typeof event.data.openedTag) {
+        openedTag = event.data.openedTag.toLocaleLowerCase();
+      } else if (null === event.data.openedTag) {
+        openedTag = null;
+      }
+
+      if ('boolean' === typeof event.data.showTrash) {
+        showTrash = event.data.showTrash;
+      }
+
       queueUpdateFilter();
     }
   };
