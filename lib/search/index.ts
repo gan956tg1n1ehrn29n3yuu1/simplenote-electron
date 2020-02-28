@@ -55,13 +55,16 @@ export const middleware: S.Middleware = store => {
         searchProcessor.postMessage({
           action: 'filterNotes',
           openedTag:
-            'App.selectTag' === action.type
+            'App.selectTrash' === action.type
+              ? null
+              : 'App.selectTag' === action.type
               ? action.tag.data.name
               : prevState.appState.tag?.data.name,
           searchQuery: action.hasOwnProperty('searchQuery')
             ? action.searchQuery
             : prevState.ui.searchQuery,
-          showTrash: prevState.ui.showTrash,
+          showTrash:
+            'App.selectTrash' === action.type ? true : prevState.ui.showTrash,
         });
         break;
     }

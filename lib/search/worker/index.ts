@@ -1,3 +1,6 @@
+import { escapeRegExp } from 'lodash';
+import { getTerms } from '../../utils/filter-notes';
+
 import * as T from '../../types';
 
 const notes: Map<T.EntityId, T.NoteEntity> = new Map();
@@ -15,17 +18,35 @@ self.onmessage = bootEvent => {
   let showTrash = false;
 
   const updateFilter = () => {
+    const terms = getTerms(searchQuery).map(
+      term => new RegExp(escapeRegExp(term), 'i')
+    );
     const matches = new Set<T.EntityId>();
+
+    const filterTags = [];
+    let match;
+    const tagPattern = /(?:\btag:)([^\s,]+)/g;
+    while ((match = tagPattern.exec(searchQuery)) !== null) {
+      filterTags.push(match[1].toLocaleLowerCase());
+    }
+    if (openedTag) {
+      filterTags.push(openedTag);
+    }
+
     for (const note of notes.values()) {
       if (showTrash !== note.data.deleted) {
         continue;
       }
 
-      if (openedTag && !note.data.tags.includes(openedTag)) {
+      const noteTags = new Set(note.data.tags);
+      if (!filterTags.every(tag => noteTags.has(tag))) {
         continue;
       }
 
-      if (searchQuery.length > 0 && !note.data.content.includes(searchQuery)) {
+      if (
+        searchQuery.length > 0 &&
+        !terms.every(term => term.test(note.data.content))
+      ) {
         continue;
       }
 
@@ -33,6 +54,18 @@ self.onmessage = bootEvent => {
     }
 
     mainApp.postMessage({ action: 'filterNotes', noteIds: matches });
+  };
+
+  let updateHandle;
+  const queueUpdateFilter = () => {
+    if (updateHandle) {
+      clearTimeout(updateHandle);
+    }
+
+    updateHandle = setTimeout(() => {
+      updateHandle = null;
+      updateFilter();
+    }, 10);
   };
 
   mainApp.onmessage = event => {
@@ -44,7 +77,7 @@ self.onmessage = bootEvent => {
           tags: event.data.data.tags.map(tag => tag.toLocaleLowerCase()),
         },
       });
-      updateFilter();
+      queueUpdateFilter();
     } else if (event.data.action === 'filterNotes') {
       searchQuery = event.data.searchQuery.trim();
       openedTag =
@@ -52,7 +85,7 @@ self.onmessage = bootEvent => {
           ? event.data.openedTag.toLocaleLowerCase()
           : event.data.openedTag;
       showTrash = event.data.showTrash;
-      updateFilter();
+      queueUpdateFilter();
     }
   };
 };
