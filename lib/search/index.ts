@@ -33,7 +33,7 @@ export const middleware: S.Middleware = store => {
     const result = next(action);
 
     switch (action.type) {
-      case 'APPLY_REMOTE_UPDATE':
+      case 'REMOTE_NOTE_UPDATE':
         searchProcessor.postMessage({
           action: 'updateNote',
           noteId: action.noteId,
