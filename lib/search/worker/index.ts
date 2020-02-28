@@ -3,7 +3,7 @@ import { getTerms } from '../../utils/filter-notes';
 
 import * as T from '../../types';
 
-const notes: Map<T.EntityId, T.NoteEntity> = new Map();
+const notes: Map<T.EntityId, [T.EntityId, T.Note]> = new Map();
 
 self.onmessage = bootEvent => {
   const mainApp: MessagePort | undefined = bootEvent.ports[0];
@@ -17,66 +17,77 @@ self.onmessage = bootEvent => {
   let openedTag: string | null = null;
   let showTrash = false;
 
-  const updateFilter = () => {
+  const updateFilter = (scope = 'quickSearch') => {
+    const tic = performance.now();
     const terms = getTerms(searchQuery).map(
       term => new RegExp(escapeRegExp(term), 'i')
     );
     const matches = new Set<T.EntityId>();
 
-    const filterTags = [];
-    let match;
+    const filterTags = openedTag ? [openedTag] : [];
     const tagPattern = /(?:\btag:)([^\s,]+)/g;
+    let match;
     while ((match = tagPattern.exec(searchQuery)) !== null) {
       filterTags.push(match[1].toLocaleLowerCase());
     }
-    if (openedTag) {
-      filterTags.push(openedTag);
-    }
 
-    for (const note of notes.values()) {
-      if (showTrash !== note.data.deleted) {
+    for (const [noteId, note] of notes.values()) {
+      // return a small set of the results quickly and then
+      // queue up another search. this improves the responsiveness
+      // of the search and it gives us another opportunity to
+      // receive inbound messages from the main thread
+      // in testing this was rare and may only happen in unexpected
+      // circumstances such as when performing a garbage-collection
+      const toc = performance.now();
+      if (scope === 'quickSearch' && toc - tic > 10) {
+        mainApp.postMessage({ action: 'filterNotes', noteIds: matches });
+        queueUpdateFilter('fullSearch');
+        return;
+      }
+
+      if (showTrash !== note.deleted) {
         continue;
       }
 
-      const noteTags = new Set(note.data.tags);
+      const noteTags = new Set(note.tags);
       if (!filterTags.every(tag => noteTags.has(tag))) {
         continue;
       }
 
       if (
         searchQuery.length > 0 &&
-        !terms.every(term => term.test(note.data.content))
+        !terms.every(term => term.test(note.content))
       ) {
         continue;
       }
 
-      matches.add(note.id);
+      matches.add(noteId);
     }
 
     mainApp.postMessage({ action: 'filterNotes', noteIds: matches });
   };
 
-  let updateHandle: ReturnType<typeof setTimeout>;
-  const queueUpdateFilter = () => {
+  let updateHandle: ReturnType<typeof setTimeout> | null = null;
+  const queueUpdateFilter = (searchScope = 'quickSearch') => {
     if (updateHandle) {
       clearTimeout(updateHandle);
     }
 
     updateHandle = setTimeout(() => {
       updateHandle = null;
-      updateFilter();
-    }, 10);
+      updateFilter(searchScope);
+    }, 0);
   };
 
   mainApp.onmessage = event => {
     if (event.data.action === 'updateNote') {
-      notes.set(event.data.noteId, {
-        id: event.data.noteId,
-        data: {
-          ...event.data.data,
-          tags: event.data.data.tags.map(tag => tag.toLocaleLowerCase()),
-        },
-      });
+      const { noteId, data } = event.data;
+
+      notes.set(noteId, [
+        noteId,
+        { ...data, tags: data.tags.map(tag => tag.toLocaleLowerCase()) },
+      ]);
+
       queueUpdateFilter();
     } else if (event.data.action === 'filterNotes') {
       if ('string' === typeof event.data.searchQuery) {
