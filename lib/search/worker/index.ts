@@ -1,4 +1,3 @@
-import { escapeRegExp } from 'lodash';
 import { getTerms } from '../../utils/filter-notes';
 
 import * as T from '../../types';
@@ -17,6 +16,7 @@ self.onmessage = bootEvent => {
   }
 
   let searchQuery = '';
+  let searchTerms: string[] = [];
   let filterTags = new Set<T.TagName>();
   let showTrash = false;
 
@@ -32,9 +32,6 @@ self.onmessage = bootEvent => {
 
   const updateFilter = (scope = 'quickSearch') => {
     const tic = performance.now();
-    const terms = getTerms(searchQuery).map(
-      term => new RegExp(escapeRegExp(term), 'i')
-    );
     const matches = new Set<T.EntityId>();
 
     for (const [noteId, note] of notes.values()) {
@@ -67,8 +64,8 @@ self.onmessage = bootEvent => {
       }
 
       if (
-        searchQuery.length > 0 &&
-        !terms.every(term => term.test(note.content))
+        searchTerms.length > 0 &&
+        !searchTerms.every(term => note.content.includes(term))
       ) {
         continue;
       }
@@ -95,11 +92,12 @@ self.onmessage = bootEvent => {
     if (event.data.action === 'updateNote') {
       const { noteId, data } = event.data;
 
+      const noteTags = new Set(data.tags.map(tag => tag.toLocaleLowerCase()));
       notes.set(noteId, [
         noteId,
         {
           ...data,
-          tags: new Set(data.tags.map(tag => tag.toLocaleLowerCase())),
+          tags: noteTags,
         },
       ]);
 
@@ -107,6 +105,7 @@ self.onmessage = bootEvent => {
     } else if (event.data.action === 'filterNotes') {
       if ('string' === typeof event.data.searchQuery) {
         searchQuery = event.data.searchQuery.trim();
+        searchTerms = getTerms(searchQuery);
         filterTags = tagsFromSearch(searchQuery);
       }
 
