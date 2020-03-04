@@ -97,6 +97,7 @@ self.onmessage = bootEvent => {
         noteId,
         {
           ...data,
+          content: data.content.toLocaleLowerCase(),
           tags: noteTags,
         },
       ]);
