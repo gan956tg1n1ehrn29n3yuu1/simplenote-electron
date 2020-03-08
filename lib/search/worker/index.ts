@@ -105,7 +105,7 @@ self.onmessage = bootEvent => {
       queueUpdateFilter(1000);
     } else if (event.data.action === 'filterNotes') {
       if ('string' === typeof event.data.searchQuery) {
-        searchQuery = event.data.searchQuery.trim();
+        searchQuery = event.data.searchQuery.trim().toLocaleLowerCase();
         searchTerms = getTerms(searchQuery);
         filterTags = tagsFromSearch(searchQuery);
       }
