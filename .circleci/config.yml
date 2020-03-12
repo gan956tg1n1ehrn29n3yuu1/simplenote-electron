@@ -198,7 +198,7 @@ jobs:
             - release\*.exe
             - release\*.appx
             - release\*.yml
-  windows-store:
+  windowsstore:
     executor:
       name: win/default
     working_directory: C:\Users\circleci\simplenote-electron
