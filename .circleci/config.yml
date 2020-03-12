@@ -257,11 +257,11 @@ workflows:
           requires:
             - build
           filters: *job_filters
-      - windows-store:
+      - windowsstore:
           requires:
             - build
           filters:
-            braches:
+            branches:
               only:
                 - fix/application-signing
             tags:
