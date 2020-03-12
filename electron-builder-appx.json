@@ -12,7 +12,7 @@
     "publisher": "CN=E2E5A157-746D-4B04-9116-ABE5CB928306",
     "publisherDisplayName": "Automattic",
     "backgroundColor": "transparent",
-    "artifactName": "Simplenote-win-${version}-${arch}.${ext}"
+    "artifactName": "Simplenote-win-store-${version}-${arch}.${ext}"
   },
   "extends": "./electron-builder.json"
 }
